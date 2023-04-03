@@ -23,6 +23,8 @@ func main() {
 		certFile = flag.String("cert", "", "Path to cert.pem. Required for security mode/policy != None")
 		keyFile  = flag.String("key", "", "Path to private key.pem. Required for security mode/policy != None")
 		nodeID   = flag.String("node", "", "node id to subscribe to")
+		userName   = flag.String("user", "", "login user name")
+		password   = flag.String("password", "", "login password")
 		interval = flag.Duration("interval", opcua.DefaultSubscriptionInterval, "subscription interval")
 	)
 	flag.BoolVar(&debug.Enable, "debug", false, "enable debug logging")
@@ -59,8 +61,8 @@ func main() {
 		opcua.SecurityModeString(*mode),
 		opcua.CertificateFile(*certFile),
 		opcua.PrivateKeyFile(*keyFile),
-		opcua.AuthAnonymous(),
-		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous),
+		opcua.AuthUsername(*userName, *password),
+		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName),
 	}
 
 	c := opcua.NewClient(ep.EndpointURL, opts...)
