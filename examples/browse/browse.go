@@ -166,15 +166,34 @@ func browse(ctx context.Context, n *opcua.Node, path string, level int) ([]NodeD
 }
 
 func main() {
-	endpoint := flag.String("endpoint", "opc.tcp://localhost:4840", "OPC UA Endpoint URL")
+	endpoint := flag.String("endpoint", "opc.tcp://192.168.1.17:4840", "OPC UA Endpoint URL")
 	nodeID := flag.String("node", "", "node id for the root node")
 	flag.BoolVar(&debug.Enable, "debug", false, "enable debug logging")
+	var (
+		userName = flag.String("user", "", "login user name")
+		password = flag.String("password", "", "login password")
+	)
 	flag.Parse()
 	log.SetFlags(0)
 
 	ctx := context.Background()
 
-	c := opcua.NewClient(*endpoint)
+	endpoints, err := opcua.GetEndpoints(ctx, *endpoint)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ep := opcua.SelectEndpoint(endpoints, "None", ua.MessageSecurityModeFromString("None"))
+	if ep == nil {
+		log.Fatal("Failed to find suitable endpoint")
+	}
+
+	opts := []opcua.Option{
+		opcua.AuthUsername(*userName, *password),
+		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName),
+	}
+
+	c := opcua.NewClient(*endpoint, opts...)
 	if err := c.Connect(ctx); err != nil {
 		log.Fatal(err)
 	}
